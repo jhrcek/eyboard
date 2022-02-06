@@ -52,12 +52,16 @@ view model =
                             remainingCharsView model.remainingChars
 
                         _ ->
+                            let
+                                mistypedLength =
+                                    List.length model.mistypedChars
+                            in
                             Html.span
                                 [ A.style "color" "#803333"
                                 , A.style "background-color" "#f0a3a3"
                                 ]
-                                [ Html.text (String.fromList model.mistypedChars) ]
-                                :: (remainingCharsView <| List.drop (List.length model.mistypedChars) model.remainingChars)
+                                [ Html.text (String.fromList <| List.take mistypedLength model.remainingChars) ]
+                                :: (remainingCharsView <| List.drop mistypedLength model.remainingChars)
                    )
             )
         , Html.div []
