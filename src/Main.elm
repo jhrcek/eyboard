@@ -4,6 +4,8 @@ import Browser exposing (Document)
 import Html exposing (Html)
 import Html.Attributes as A
 import Keyboard exposing (RawKey)
+import Task
+import Time exposing (Posix)
 
 
 main : Program () Model Msg
@@ -20,11 +22,17 @@ type alias Model =
     { acceptedChars : List Char
     , remainingChars : List Char
     , mistypedChars : List Char
+
+    -- TODO should this be zipped with accepted chars?
+    , charDurationMillis : List Int
+    , lastTime : Posix
     }
 
 
 type Msg
     = KeyDown RawKey
+    | GotInitialTime Posix
+    | GotTimeWhenCharWasTyped Posix
 
 
 init : () -> ( Model, Cmd Msg )
@@ -32,8 +40,10 @@ init () =
     ( { remainingChars = String.toList "But in a solitary life, there are rare moments when another soul dips near yours, as stars once a year brush the earth. Such a constellation was he to me."
       , acceptedChars = []
       , mistypedChars = []
+      , charDurationMillis = []
+      , lastTime = Time.millisToPosix 0
       }
-    , Cmd.none
+    , Task.perform GotInitialTime Time.now
     )
 
 
@@ -66,8 +76,23 @@ view model =
             )
         , Html.div []
             [ Html.text <| String.fromList model.mistypedChars ]
+        , Html.div []
+            [ Html.text <| "WPM: " ++ String.fromInt (calculateWPM model.charDurationMillis) ]
         ]
     }
+
+
+calculateWPM : List Int -> Int
+calculateWPM charDurations =
+    let
+        chars =
+            toFloat (List.length charDurations)
+
+        millis =
+            toFloat (List.sum charDurations)
+    in
+    -- word has 5 chars, second has 1000 millis, minute has 60 seconds;  so 60 * 1000 / 5 = 12000
+    round <| 12000 * chars / millis
 
 
 remainingCharsView : List Char -> List (Html Msg)
@@ -96,6 +121,19 @@ keyParser =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotInitialTime posix ->
+            ( { model | lastTime = posix }, Cmd.none )
+
+        GotTimeWhenCharWasTyped posix ->
+            ( { model
+                | lastTime = posix
+                , charDurationMillis =
+                    (Time.posixToMillis posix - Time.posixToMillis model.lastTime)
+                        :: model.charDurationMillis
+              }
+            , Cmd.none
+            )
+
         KeyDown rawKey ->
             case keyParser rawKey of
                 Just Keyboard.Backspace ->
@@ -106,12 +144,13 @@ update msg model =
                 Just (Keyboard.Character c) ->
                     case model.remainingChars of
                         b :: rest ->
-                            if c == String.fromChar b then
+                            if List.isEmpty model.mistypedChars && c == String.fromChar b then
                                 ( { model
                                     | acceptedChars = model.acceptedChars ++ String.toList c
                                     , remainingChars = rest
                                   }
-                                , Cmd.none
+                                  -- We only measure time after successfully typed character
+                                , Task.perform GotTimeWhenCharWasTyped Time.now
                                 )
 
                             else
