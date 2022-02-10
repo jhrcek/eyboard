@@ -1,9 +1,10 @@
-module Main exposing (main)
+module Main exposing (keyParser, main)
 
 import Browser exposing (Document)
 import Html exposing (Html)
 import Html.Attributes as A
 import Keyboard exposing (RawKey)
+import Set exposing (Set)
 import Task
 import Time exposing (Posix)
 
@@ -22,6 +23,7 @@ type alias Model =
     { acceptedChars : List Char
     , remainingChars : List Char
     , mistypedChars : List Char
+    , mistakePositions : Set Int
 
     -- TODO should this be zipped with accepted chars?
     , charDurationMillis : List Int
@@ -37,10 +39,11 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { remainingChars = String.toList "But in a solitary life, there are rare moments when another soul dips near yours, as stars once a year brush the earth. Such a constellation was he to me."
+    ( { remainingChars = String.toList "Hello, this is a test."
       , acceptedChars = []
       , mistypedChars = []
       , charDurationMillis = []
+      , mistakePositions = Set.empty
       , lastTime = Time.millisToPosix 0
       }
     , Task.perform GotInitialTime Time.now
@@ -76,10 +79,27 @@ view model =
             )
         , Html.div []
             [ Html.text <| String.fromList model.mistypedChars ]
-        , Html.div []
-            [ Html.text <| "WPM: " ++ String.fromInt (calculateWPM model.charDurationMillis) ]
+        , if List.isEmpty model.remainingChars then
+            Html.div []
+                [ Html.text <| "WPM: " ++ String.fromInt (calculateWPM model.charDurationMillis)
+                , Html.br [] []
+
+                -- TODO proper formatting of decimal
+                , Html.text <|
+                    "Success rate: "
+                        ++ String.left 5
+                            (String.fromFloat (calculateSuccessRate model.mistakePositions model.acceptedChars))
+                ]
+
+          else
+            Html.text ""
         ]
     }
+
+
+calculateSuccessRate : Set Int -> List Char -> Float
+calculateSuccessRate mistakeIndices acceptedChars =
+    100 * (1 - toFloat (Set.size mistakeIndices) / toFloat (List.length acceptedChars))
 
 
 calculateWPM : List Int -> Int
@@ -111,6 +131,7 @@ remainingCharsView chars =
             ]
 
 
+keyParser : RawKey -> Maybe Keyboard.Key
 keyParser =
     Keyboard.oneOf
         [ Keyboard.characterKeyOriginal
@@ -137,6 +158,7 @@ update msg model =
         KeyDown rawKey ->
             case keyParser rawKey of
                 Just Keyboard.Backspace ->
+                    -- TODO should we allow backspacing already typed chars?
                     ( { model | mistypedChars = List.take (List.length model.mistypedChars - 1) model.mistypedChars }
                     , Cmd.none
                     )
@@ -154,7 +176,10 @@ update msg model =
                                 )
 
                             else
-                                ( { model | mistypedChars = model.mistypedChars ++ String.toList c }
+                                ( { model
+                                    | mistypedChars = model.mistypedChars ++ String.toList c
+                                    , mistakePositions = Set.insert (List.length model.acceptedChars) model.mistakePositions
+                                  }
                                 , Cmd.none
                                 )
 
@@ -169,3 +194,9 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Keyboard.downs KeyDown
+
+
+
+-- TODO count mistakes an accuracy
+-- TODO how to count if mistake is made multiple times for one letter?
+-- TODO when typing finished, show summary stats + error rate
