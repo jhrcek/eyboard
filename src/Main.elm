@@ -1,6 +1,7 @@
 module Main exposing (keyParser, main)
 
 import Browser exposing (Document)
+import Browser.Dom as Dom
 import Html exposing (Html)
 import Html.Attributes as A
 import Html.Events as E
@@ -38,7 +39,8 @@ type Msg
     | InputTextChanged String
     | InputTextSaved
     | InputTextChangeCancelled
-    | StartAgainClicked
+    | RestartClicked
+    | NoOp
 
 
 init : () -> ( Model, Cmd Msg )
@@ -108,7 +110,7 @@ view model =
                         , A.style "justify-content" "flex-end"
                         ]
                         [ Html.button [ E.onClick InputTextEdit ] [ Html.text "Edit" ]
-                        , Html.button [ E.onClick StartAgainClicked ] [ Html.text "Restart" ]
+                        , Html.button [ E.onClick RestartClicked, A.id restartBtnId ] [ Html.text "Restart" ]
                         ]
 
                 Just txt ->
@@ -131,6 +133,11 @@ view model =
             ]
         ]
     }
+
+
+restartBtnId : String
+restartBtnId =
+    "restart"
 
 
 calculateSuccessRate : Set Int -> List Char -> Float
@@ -249,12 +256,20 @@ update msg model =
         InputTextChangeCancelled ->
             ( { model | inputText = Nothing }, Cmd.none )
 
-        StartAgainClicked ->
+        RestartClicked ->
             let
                 origText =
                     String.fromList (model.acceptedChars ++ model.remainingChars)
             in
-            ( resetTypingState origText model, Cmd.none )
+            ( resetTypingState origText model
+              -- Blur restart button after it's clicked.
+              -- It was getting focused after user started typing,
+              -- leading to Space presses causing restart button to be clicked
+            , Task.attempt (\_ -> NoOp) (Dom.blur restartBtnId)
+            )
+
+        NoOp ->
+            ( model, Cmd.none )
 
 
 resetTypingState : String -> Model -> Model
@@ -291,4 +306,3 @@ subscriptions model =
 -- TODO center the text being typed on the page
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
--- TODO bug: press restart and start typing -> Restart button becomes focused and typing space presses it
