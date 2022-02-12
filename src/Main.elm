@@ -3,6 +3,7 @@ module Main exposing (keyParser, main)
 import Browser exposing (Document)
 import Html exposing (Html)
 import Html.Attributes as A
+import Html.Events as E
 import Keyboard exposing (RawKey)
 import Set exposing (Set)
 import Task
@@ -24,29 +25,33 @@ type alias Model =
     , remainingChars : List Char
     , mistypedChars : List Char
     , mistakePositions : Set Int
-
-    -- TODO should this be zipped with accepted chars?
     , charDurationMillis : List Int
-    , lastTime : Posix
+    , lastTime : Maybe Posix
+    , inputText : Maybe String
     }
 
 
 type Msg
     = KeyDown RawKey
-    | GotInitialTime Posix
     | GotTimeWhenCharWasTyped Posix
+    | InputTextEdit
+    | InputTextChanged String
+    | InputTextSaved
+    | InputTextChangeCancelled
+    | StartAgainClicked
 
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { remainingChars = String.toList "Hello, this is a test."
+    ( { remainingChars = String.toList "Test"
       , acceptedChars = []
       , mistypedChars = []
       , charDurationMillis = []
       , mistakePositions = Set.empty
-      , lastTime = Time.millisToPosix 0
+      , lastTime = Nothing
+      , inputText = Nothing
       }
-    , Task.perform GotInitialTime Time.now
+    , Cmd.none
     )
 
 
@@ -56,8 +61,13 @@ view model =
     , body =
         [ Html.div
             [ A.style "font-size" "30px"
-            , A.style "font-family" "pt-mono"
+            , A.style "font-family" "Courier new"
             , A.style "font-weight" "500"
+            , A.style "margin" "auto"
+            , A.style "width" "950px"
+            , A.style "line-height" "200%"
+
+            --, A.style "margin-left" "auto"
             ]
             (Html.span [ A.style "color" "#95c590" ] [ Html.text (String.fromList model.acceptedChars) ]
                 :: (case model.mistypedChars of
@@ -93,6 +103,23 @@ view model =
 
           else
             Html.text ""
+        , Html.div []
+            [ case model.inputText of
+                Nothing ->
+                    Html.button [ E.onClick InputTextEdit ] [ Html.text "Edit" ]
+
+                Just txt ->
+                    Html.div []
+                        [ Html.textarea [ A.rows 20, A.cols 80, A.value txt, E.onInput InputTextChanged ] []
+                        , Html.br [] []
+                        , Html.button [ E.onClick InputTextSaved ] [ Html.text "Save" ]
+                        , Html.text " "
+                        , Html.button [ E.onClick InputTextChangeCancelled ] [ Html.text "Cancel" ]
+                        ]
+            , Html.button
+                [ E.onClick StartAgainClicked ]
+                [ Html.text "Restart" ]
+            ]
         ]
     }
 
@@ -142,15 +169,17 @@ keyParser =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotInitialTime posix ->
-            ( { model | lastTime = posix }, Cmd.none )
-
         GotTimeWhenCharWasTyped posix ->
             ( { model
-                | lastTime = posix
+                | lastTime = Just posix
                 , charDurationMillis =
-                    (Time.posixToMillis posix - Time.posixToMillis model.lastTime)
-                        :: model.charDurationMillis
+                    case model.lastTime of
+                        Nothing ->
+                            model.charDurationMillis
+
+                        Just prevTime ->
+                            (Time.posixToMillis posix - Time.posixToMillis prevTime)
+                                :: model.charDurationMillis
               }
             , Cmd.none
             )
@@ -190,13 +219,60 @@ update msg model =
                     -- TODO do we need to handle other chars?
                     ( model, Cmd.none )
 
+        InputTextEdit ->
+            ( { model | inputText = Just (String.fromList (model.acceptedChars ++ model.remainingChars)) }
+            , Cmd.none
+            )
+
+        InputTextChanged str ->
+            ( { model | inputText = Just str }, Cmd.none )
+
+        InputTextSaved ->
+            ( case model.inputText of
+                Just newText ->
+                    resetTypingState newText model
+
+                Nothing ->
+                    model
+            , Cmd.none
+            )
+
+        InputTextChangeCancelled ->
+            ( { model | inputText = Nothing }, Cmd.none )
+
+        StartAgainClicked ->
+            let
+                origText =
+                    String.fromList (model.acceptedChars ++ model.remainingChars)
+            in
+            ( resetTypingState origText model, Cmd.none )
+
+
+resetTypingState : String -> Model -> Model
+resetTypingState textToType model =
+    { model
+        | remainingChars = String.toList (String.trim textToType)
+        , acceptedChars = []
+        , mistypedChars = []
+        , mistakePositions = Set.empty
+        , charDurationMillis = []
+        , inputText = Nothing
+        , lastTime = Nothing
+    }
+
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Keyboard.downs KeyDown
+subscriptions model =
+    case model.inputText of
+        Nothing ->
+            Keyboard.downs KeyDown
+
+        Just _ ->
+            Sub.none
 
 
 
--- TODO count mistakes an accuracy
--- TODO how to count if mistake is made multiple times for one letter?
--- TODO when typing finished, show summary stats + error rate
+-- TODO center the text being typed on the page
+-- TODO save stats and progress in local storage
+-- TODO move the already written text up
+-- TODO deal with characters in input text that can't be typed on normal keyboard, like '’'
