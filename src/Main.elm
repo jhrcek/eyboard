@@ -43,7 +43,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { remainingChars = String.toList "Test"
+    ( { remainingChars = String.toList "This is a test."
       , acceptedChars = []
       , mistypedChars = []
       , charDurationMillis = []
@@ -60,65 +60,74 @@ view model =
     { title = "eyboard"
     , body =
         [ Html.div
-            [ A.style "font-size" "30px"
-            , A.style "font-family" "Courier new"
-            , A.style "font-weight" "500"
-            , A.style "margin" "auto"
+            [ A.style "margin" "auto"
             , A.style "width" "950px"
-            , A.style "line-height" "200%"
-
-            --, A.style "margin-left" "auto"
             ]
-            (Html.span [ A.style "color" "#95c590" ] [ Html.text (String.fromList model.acceptedChars) ]
-                :: (case model.mistypedChars of
-                        [] ->
-                            remainingCharsView model.remainingChars
-
-                        _ ->
-                            let
-                                mistypedLength =
-                                    List.length model.mistypedChars
-                            in
-                            Html.span
-                                [ A.style "color" "#803333"
-                                , A.style "background-color" "#f0a3a3"
-                                ]
-                                [ Html.text (String.fromList <| List.take mistypedLength model.remainingChars) ]
-                                :: (remainingCharsView <| List.drop mistypedLength model.remainingChars)
-                   )
-            )
-        , Html.div []
-            [ Html.text <| String.fromList model.mistypedChars ]
-        , if List.isEmpty model.remainingChars then
-            Html.div []
-                [ Html.text <| "WPM: " ++ String.fromInt (calculateWPM model.charDurationMillis)
-                , Html.br [] []
-
-                -- TODO proper formatting of decimal
-                , Html.text <|
-                    "Success rate: "
-                        ++ String.left 5
-                            (String.fromFloat (calculateSuccessRate model.mistakePositions model.acceptedChars))
+            [ Html.div
+                [ A.style "font-size" "30px"
+                , A.style "font-family" "Courier new"
+                , A.style "font-weight" "500"
+                , A.style "line-height" "200%"
                 ]
+                (Html.span [ A.style "color" "#95c590" ] [ Html.text (String.fromList model.acceptedChars) ]
+                    :: (case model.mistypedChars of
+                            [] ->
+                                remainingCharsView model.remainingChars
 
-          else
-            Html.text ""
-        , Html.div []
-            [ case model.inputText of
+                            _ ->
+                                let
+                                    mistypedLength =
+                                        List.length model.mistypedChars
+                                in
+                                Html.span
+                                    [ A.style "color" "#803333"
+                                    , A.style "background-color" "#f0a3a3"
+                                    ]
+                                    [ Html.text (String.fromList <| List.take mistypedLength model.remainingChars) ]
+                                    :: (remainingCharsView <| List.drop mistypedLength model.remainingChars)
+                       )
+                )
+            , if List.isEmpty model.remainingChars then
+                Html.div []
+                    [ Html.text <| "WPM: " ++ String.fromInt (calculateWPM model.charDurationMillis)
+                    , Html.br [] []
+
+                    -- TODO proper formatting of decimal
+                    , Html.text <|
+                        "Success rate: "
+                            ++ String.left 5
+                                (String.fromFloat (calculateSuccessRate model.mistakePositions model.acceptedChars))
+                    ]
+
+              else
+                Html.text ""
+            , case model.inputText of
                 Nothing ->
-                    Html.button [ E.onClick InputTextEdit ] [ Html.text "Edit" ]
+                    Html.div
+                        [ A.style "display" "flex"
+                        , A.style "justify-content" "flex-end"
+                        ]
+                        [ Html.button [ E.onClick InputTextEdit ] [ Html.text "Edit" ]
+                        , Html.button [ E.onClick StartAgainClicked ] [ Html.text "Restart" ]
+                        ]
 
                 Just txt ->
                     Html.div []
-                        [ Html.textarea [ A.rows 20, A.cols 80, A.value txt, E.onInput InputTextChanged ] []
-                        , Html.br [] []
-                        , Html.button [ E.onClick InputTextSaved ] [ Html.text "Save" ]
-                        , Html.text " "
-                        , Html.button [ E.onClick InputTextChangeCancelled ] [ Html.text "Cancel" ]
+                        [ Html.textarea
+                            [ A.rows 20
+                            , A.style "width" "950px"
+                            , A.value txt
+                            , E.onInput InputTextChanged
+                            ]
+                            []
+                        , Html.div
+                            [ A.style "display" "flex"
+                            , A.style "justify-content" "flex-end"
+                            ]
+                            [ Html.button [ E.onClick InputTextSaved ] [ Html.text "Save" ]
+                            , Html.button [ E.onClick InputTextChangeCancelled ] [ Html.text "Cancel" ]
+                            ]
                         ]
-            , Html.button
-                [ E.onClick StartAgainClicked ]
-                [ Html.text "Restart" ]
             ]
         ]
     }
@@ -282,3 +291,4 @@ subscriptions model =
 -- TODO center the text being typed on the page
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
+-- TODO bug: press restart and start typing -> Restart button becomes focused and typing space presses it
