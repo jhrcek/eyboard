@@ -251,7 +251,7 @@ update msg model =
 resetTypingState : String -> Model -> Model
 resetTypingState textToType model =
     { model
-        | remainingChars = String.toList (String.trim textToType)
+        | remainingChars = List.filter isAscii (String.toList (String.trim textToType))
         , acceptedChars = []
         , mistypedChars = []
         , mistakePositions = Set.empty
@@ -259,6 +259,13 @@ resetTypingState textToType model =
         , inputText = Nothing
         , lastTime = Nothing
     }
+
+
+{-| Only keep ASCII chars, as non-ASCII chars are hard to type on the keyboard
+-}
+isAscii : Char -> Bool
+isAscii c =
+    Char.toCode c <= 256
 
 
 subscriptions : Model -> Sub Msg
@@ -275,4 +282,3 @@ subscriptions model =
 -- TODO center the text being typed on the page
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
--- TODO deal with characters in input text that can't be typed on normal keyboard, like '’'
