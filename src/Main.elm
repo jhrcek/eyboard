@@ -45,7 +45,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { remainingChars = String.toList "This is a test."
+    ( { remainingChars = String.toList "Type this text to practice your typing."
       , acceptedChars = []
       , mistypedChars = []
       , charDurationMillis = []
@@ -120,6 +120,7 @@ view model =
                             , A.style "width" "950px"
                             , A.value txt
                             , E.onInput InputTextChanged
+                            , A.placeholder "Enter text that you want to practice typing"
                             ]
                             []
                         , Html.div
@@ -306,3 +307,4 @@ subscriptions model =
 -- TODO center the text being typed on the page
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
+-- TODO deal with input text containing Enter?

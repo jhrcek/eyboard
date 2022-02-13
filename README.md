@@ -1,6 +1,7 @@
 # Eyboard
 
 A simple browser app for practicing typing with 10 fingers.
+Try it: [janhrcek.cz/eyboard](http://janhrcek.cz/eyboard/)
 
 There are a bunch of free websites where you can practice typing with 10 fingers.
 
@@ -20,4 +21,3 @@ This project is my attempt to bring together all the features I like, while disp
 4. no "countdown" before each typing session. Having to wait before typing lesson wastes my time.
 5. no adds. I want clear, focused UI without distractions.
 6. ability to track progress over time. I want to know what letters I am slow to type / which letters I often mistype.
-
