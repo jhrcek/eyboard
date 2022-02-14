@@ -5211,13 +5211,13 @@ var $elm$core$String$toList = function (string) {
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
-			l: _List_Nil,
+			k: _List_Nil,
 			v: _List_Nil,
-			o: $elm$core$Maybe$Nothing,
+			n: $elm$core$Maybe$Nothing,
 			F: $elm$core$Maybe$Nothing,
 			B: $elm$core$Set$empty,
 			j: _List_Nil,
-			k: $elm$core$String$toList('Type this text to practice your typing.')
+			p: $elm$core$String$toList('Type this text to practice your typing.')
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -5637,7 +5637,7 @@ var $ohanhi$keyboard$Keyboard$downs = function (toMsg) {
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (model) {
-	var _v0 = model.o;
+	var _v0 = model.n;
 	if (_v0.$ === 1) {
 		return $ohanhi$keyboard$Keyboard$downs($author$project$Main$KeyDown);
 	} else {
@@ -5804,13 +5804,13 @@ var $author$project$Main$resetTypingState = F2(
 		return _Utils_update(
 			model,
 			{
-				l: _List_Nil,
+				k: _List_Nil,
 				v: _List_Nil,
-				o: $elm$core$Maybe$Nothing,
+				n: $elm$core$Maybe$Nothing,
 				F: $elm$core$Maybe$Nothing,
 				B: $elm$core$Set$empty,
 				j: _List_Nil,
-				k: A2(
+				p: A2(
 					$elm$core$List$filter,
 					$author$project$Main$isAscii,
 					$elm$core$String$toList(
@@ -5989,7 +5989,7 @@ var $author$project$Main$update = F2(
 									$elm$core$Platform$Cmd$none);
 							case 0:
 								var c = _v2.a.a;
-								var _v4 = model.k;
+								var _v4 = model.p;
 								if (_v4.b) {
 									var b = _v4.a;
 									var rest = _v4.b;
@@ -5999,10 +5999,10 @@ var $author$project$Main$update = F2(
 										_Utils_update(
 											model,
 											{
-												l: _Utils_ap(
-													model.l,
+												k: _Utils_ap(
+													model.k,
 													$elm$core$String$toList(c)),
-												k: rest
+												p: rest
 											}),
 										A2($elm$core$Task$perform, $author$project$Main$GotTimeWhenCharWasTyped, $elm$time$Time$now)) : _Utils_Tuple2(
 										_Utils_update(
@@ -6010,7 +6010,7 @@ var $author$project$Main$update = F2(
 											{
 												B: A2(
 													$elm$core$Set$insert,
-													$elm$core$List$length(model.l),
+													$elm$core$List$length(model.k),
 													model.B),
 												j: _Utils_ap(
 													model.j,
@@ -6033,9 +6033,9 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							o: $elm$core$Maybe$Just(
+							n: $elm$core$Maybe$Just(
 								$elm$core$String$fromList(
-									_Utils_ap(model.l, model.k)))
+									_Utils_ap(model.k, model.p)))
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 3:
@@ -6044,13 +6044,13 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							o: $elm$core$Maybe$Just(str)
+							n: $elm$core$Maybe$Just(str)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
 				return _Utils_Tuple2(
 					function () {
-						var _v5 = model.o;
+						var _v5 = model.n;
 						if (!_v5.$) {
 							var newText = _v5.a;
 							return A2($author$project$Main$resetTypingState, newText, model);
@@ -6063,11 +6063,11 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{o: $elm$core$Maybe$Nothing}),
+						{n: $elm$core$Maybe$Nothing}),
 					$elm$core$Platform$Cmd$none);
 			case 6:
 				var origText = $elm$core$String$fromList(
-					_Utils_ap(model.l, model.k));
+					_Utils_ap(model.k, model.p));
 				return _Utils_Tuple2(
 					A2($author$project$Main$resetTypingState, origText, model),
 					A2(
@@ -6158,6 +6158,31 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$mistypedCharsView = function (chars) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'color', '#803333'),
+				A2($elm$html$Html$Attributes$style, 'background-color', '#f0a3a3')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				$elm$core$String$fromList(
+					A2(
+						$elm$core$List$map,
+						function (c) {
+							return (c === ' ') ? '\u00A0' : c;
+						},
+						chars)))
+			]));
+};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 0, a: a};
 };
@@ -6207,11 +6232,6 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$remainingCharsView = function (chars) {
 	if (!chars.b) {
 		return _List_Nil;
@@ -6284,34 +6304,17 @@ var $author$project$Main$view = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										$elm$core$String$fromList(model.l))
+										$elm$core$String$fromList(model.k))
 									])),
-							function () {
-								var _v0 = model.j;
-								if (!_v0.b) {
-									return $author$project$Main$remainingCharsView(model.k);
-								} else {
-									var mistypedLength = $elm$core$List$length(model.j);
-									return A2(
-										$elm$core$List$cons,
-										A2(
-											$elm$html$Html$span,
-											_List_fromArray(
-												[
-													A2($elm$html$Html$Attributes$style, 'color', '#803333'),
-													A2($elm$html$Html$Attributes$style, 'background-color', '#f0a3a3')
-												]),
-											_List_fromArray(
-												[
-													$elm$html$Html$text(
-													$elm$core$String$fromList(
-														A2($elm$core$List$take, mistypedLength, model.k)))
-												])),
-										$author$project$Main$remainingCharsView(
-											A2($elm$core$List$drop, mistypedLength, model.k)));
-								}
-							}())),
-						$elm$core$List$isEmpty(model.k) ? A2(
+							A2(
+								$elm$core$List$cons,
+								$author$project$Main$mistypedCharsView(model.j),
+								$author$project$Main$remainingCharsView(
+									A2(
+										$elm$core$List$drop,
+										$elm$core$List$length(model.j),
+										model.p))))),
+						$elm$core$List$isEmpty(model.p) ? A2(
 						$elm$html$Html$div,
 						_List_Nil,
 						_List_fromArray(
@@ -6325,11 +6328,11 @@ var $author$project$Main$view = function (model) {
 									$elm$core$String$left,
 									5,
 									$elm$core$String$fromFloat(
-										A2($author$project$Main$calculateSuccessRate, model.B, model.l))))
+										A2($author$project$Main$calculateSuccessRate, model.B, model.k))))
 							])) : $elm$html$Html$text(''),
 						function () {
-						var _v1 = model.o;
-						if (_v1.$ === 1) {
+						var _v0 = model.n;
+						if (_v0.$ === 1) {
 							return A2(
 								$elm$html$Html$div,
 								_List_fromArray(
@@ -6362,7 +6365,7 @@ var $author$project$Main$view = function (model) {
 											]))
 									]));
 						} else {
-							var txt = _v1.a;
+							var txt = _v0.a;
 							return A2(
 								$elm$html$Html$div,
 								_List_Nil,

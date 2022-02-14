@@ -72,22 +72,8 @@ view model =
                 , A.style "line-height" "200%"
                 ]
                 (Html.span [ A.style "color" "#95c590" ] [ Html.text (String.fromList model.acceptedChars) ]
-                    :: (case model.mistypedChars of
-                            [] ->
-                                remainingCharsView model.remainingChars
-
-                            _ ->
-                                let
-                                    mistypedLength =
-                                        List.length model.mistypedChars
-                                in
-                                Html.span
-                                    [ A.style "color" "#803333"
-                                    , A.style "background-color" "#f0a3a3"
-                                    ]
-                                    [ Html.text (String.fromList <| List.take mistypedLength model.remainingChars) ]
-                                    :: (remainingCharsView <| List.drop mistypedLength model.remainingChars)
-                       )
+                    :: mistypedCharsView model.mistypedChars
+                    :: (remainingCharsView <| List.drop (List.length model.mistypedChars) model.remainingChars)
                 )
             , if List.isEmpty model.remainingChars then
                 Html.div []
@@ -173,6 +159,26 @@ remainingCharsView chars =
                 [ Html.text (String.fromChar c) ]
             , Html.span [] [ Html.text (String.fromList rest) ]
             ]
+
+
+mistypedCharsView : List Char -> Html Msg
+mistypedCharsView chars =
+    Html.span [ A.style "color" "#803333", A.style "background-color" "#f0a3a3" ]
+        [ Html.text
+            (String.fromList <|
+                List.map
+                    (\c ->
+                        if c == ' ' then
+                            -- If user mistypes space, we need to show non-breaking space so it's visible
+                            '\u{00A0}'
+                            {- nbsp; -}
+
+                        else
+                            c
+                    )
+                    chars
+            )
+        ]
 
 
 keyParser : RawKey -> Maybe Keyboard.Key
@@ -308,3 +314,4 @@ subscriptions model =
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
 -- TODO deal with input text containing Enter?
+-- TODO deal with empty input
