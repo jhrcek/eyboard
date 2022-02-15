@@ -6,6 +6,7 @@ import Html exposing (Html)
 import Html.Attributes as A
 import Html.Events as E
 import Keyboard exposing (RawKey)
+import List.Extra as List
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -210,20 +211,20 @@ update msg model =
         KeyDown rawKey ->
             case keyParser rawKey of
                 Just Keyboard.Backspace ->
-                    ( case model.mistypedChars of
-                        [] ->
-                            case unconsLast model.acceptedChars of
+                    ( case List.init model.mistypedChars of
+                        Nothing ->
+                            case List.unconsLast model.acceptedChars of
                                 Nothing ->
                                     model
 
-                                Just ( initAccepted, lastAccepted ) ->
+                                Just ( lastAccepted, initAccepted ) ->
                                     { model
                                         | acceptedChars = initAccepted
                                         , remainingChars = lastAccepted :: model.remainingChars
                                     }
 
-                        _ ->
-                            { model | mistypedChars = List.take (List.length model.mistypedChars - 1) model.mistypedChars }
+                        Just mistypedInit ->
+                            { model | mistypedChars = mistypedInit }
                     , Cmd.none
                     )
 
@@ -289,16 +290,6 @@ update msg model =
 
         NoOp ->
             ( model, Cmd.none )
-
-
-unconsLast : List a -> Maybe ( List a, a )
-unconsLast list =
-    case List.reverse list of
-        last :: rest ->
-            Just ( List.reverse rest, last )
-
-        [] ->
-            Nothing
 
 
 resetTypingState : String -> Model -> Model
