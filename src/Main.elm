@@ -210,8 +210,20 @@ update msg model =
         KeyDown rawKey ->
             case keyParser rawKey of
                 Just Keyboard.Backspace ->
-                    -- TODO should we allow backspacing already typed chars?
-                    ( { model | mistypedChars = List.take (List.length model.mistypedChars - 1) model.mistypedChars }
+                    ( case model.mistypedChars of
+                        [] ->
+                            case unconsLast model.acceptedChars of
+                                Nothing ->
+                                    model
+
+                                Just ( initAccepted, lastAccepted ) ->
+                                    { model
+                                        | acceptedChars = initAccepted
+                                        , remainingChars = lastAccepted :: model.remainingChars
+                                    }
+
+                        _ ->
+                            { model | mistypedChars = List.take (List.length model.mistypedChars - 1) model.mistypedChars }
                     , Cmd.none
                     )
 
@@ -279,6 +291,16 @@ update msg model =
             ( model, Cmd.none )
 
 
+unconsLast : List a -> Maybe ( List a, a )
+unconsLast list =
+    case List.reverse list of
+        last :: rest ->
+            Just ( List.reverse rest, last )
+
+        [] ->
+            Nothing
+
+
 resetTypingState : String -> Model -> Model
 resetTypingState textToType model =
     { model
@@ -310,7 +332,6 @@ subscriptions model =
 
 
 
--- TODO center the text being typed on the page
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
 -- TODO deal with input text containing Enter?

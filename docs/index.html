@@ -5211,13 +5211,13 @@ var $elm$core$String$toList = function (string) {
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
-			k: _List_Nil,
+			g: _List_Nil,
 			v: _List_Nil,
-			n: $elm$core$Maybe$Nothing,
+			o: $elm$core$Maybe$Nothing,
 			F: $elm$core$Maybe$Nothing,
 			B: $elm$core$Set$empty,
 			j: _List_Nil,
-			p: $elm$core$String$toList('Type this text to practice your typing.')
+			l: $elm$core$String$toList('Type this text to practice your typing.')
 		},
 		$elm$core$Platform$Cmd$none);
 };
@@ -5637,7 +5637,7 @@ var $ohanhi$keyboard$Keyboard$downs = function (toMsg) {
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (model) {
-	var _v0 = model.n;
+	var _v0 = model.o;
 	if (_v0.$ === 1) {
 		return $ohanhi$keyboard$Keyboard$downs($author$project$Main$KeyDown);
 	} else {
@@ -5804,13 +5804,13 @@ var $author$project$Main$resetTypingState = F2(
 		return _Utils_update(
 			model,
 			{
-				k: _List_Nil,
+				g: _List_Nil,
 				v: _List_Nil,
-				n: $elm$core$Maybe$Nothing,
+				o: $elm$core$Maybe$Nothing,
 				F: $elm$core$Maybe$Nothing,
 				B: $elm$core$Set$empty,
 				j: _List_Nil,
-				p: A2(
+				l: A2(
 					$elm$core$List$filter,
 					$author$project$Main$isAscii,
 					$elm$core$String$toList(
@@ -5944,6 +5944,19 @@ var $elm$core$List$take = F2(
 	function (n, list) {
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
+var $author$project$Main$unconsLast = function (list) {
+	var _v0 = $elm$core$List$reverse(list);
+	if (_v0.b) {
+		var last = _v0.a;
+		var rest = _v0.b;
+		return $elm$core$Maybe$Just(
+			_Utils_Tuple2(
+				$elm$core$List$reverse(rest),
+				last));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5978,31 +5991,51 @@ var $author$project$Main$update = F2(
 							case 26:
 								var _v3 = _v2.a;
 								return _Utils_Tuple2(
-									_Utils_update(
-										model,
-										{
-											j: A2(
-												$elm$core$List$take,
-												$elm$core$List$length(model.j) - 1,
-												model.j)
-										}),
+									function () {
+										var _v4 = model.j;
+										if (!_v4.b) {
+											var _v5 = $author$project$Main$unconsLast(model.g);
+											if (_v5.$ === 1) {
+												return model;
+											} else {
+												var _v6 = _v5.a;
+												var initAccepted = _v6.a;
+												var lastAccepted = _v6.b;
+												return _Utils_update(
+													model,
+													{
+														g: initAccepted,
+														l: A2($elm$core$List$cons, lastAccepted, model.l)
+													});
+											}
+										} else {
+											return _Utils_update(
+												model,
+												{
+													j: A2(
+														$elm$core$List$take,
+														$elm$core$List$length(model.j) - 1,
+														model.j)
+												});
+										}
+									}(),
 									$elm$core$Platform$Cmd$none);
 							case 0:
 								var c = _v2.a.a;
-								var _v4 = model.p;
-								if (_v4.b) {
-									var b = _v4.a;
-									var rest = _v4.b;
+								var _v7 = model.l;
+								if (_v7.b) {
+									var b = _v7.a;
+									var rest = _v7.b;
 									return ($elm$core$List$isEmpty(model.j) && _Utils_eq(
 										c,
 										$elm$core$String$fromChar(b))) ? _Utils_Tuple2(
 										_Utils_update(
 											model,
 											{
-												k: _Utils_ap(
-													model.k,
+												g: _Utils_ap(
+													model.g,
 													$elm$core$String$toList(c)),
-												p: rest
+												l: rest
 											}),
 										A2($elm$core$Task$perform, $author$project$Main$GotTimeWhenCharWasTyped, $elm$time$Time$now)) : _Utils_Tuple2(
 										_Utils_update(
@@ -6010,7 +6043,7 @@ var $author$project$Main$update = F2(
 											{
 												B: A2(
 													$elm$core$Set$insert,
-													$elm$core$List$length(model.k),
+													$elm$core$List$length(model.g),
 													model.B),
 												j: _Utils_ap(
 													model.j,
@@ -6033,9 +6066,9 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							n: $elm$core$Maybe$Just(
+							o: $elm$core$Maybe$Just(
 								$elm$core$String$fromList(
-									_Utils_ap(model.k, model.p)))
+									_Utils_ap(model.g, model.l)))
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 3:
@@ -6044,15 +6077,15 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							n: $elm$core$Maybe$Just(str)
+							o: $elm$core$Maybe$Just(str)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 4:
 				return _Utils_Tuple2(
 					function () {
-						var _v5 = model.n;
-						if (!_v5.$) {
-							var newText = _v5.a;
+						var _v8 = model.o;
+						if (!_v8.$) {
+							var newText = _v8.a;
 							return A2($author$project$Main$resetTypingState, newText, model);
 						} else {
 							return model;
@@ -6063,16 +6096,16 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{n: $elm$core$Maybe$Nothing}),
+						{o: $elm$core$Maybe$Nothing}),
 					$elm$core$Platform$Cmd$none);
 			case 6:
 				var origText = $elm$core$String$fromList(
-					_Utils_ap(model.k, model.p));
+					_Utils_ap(model.g, model.l));
 				return _Utils_Tuple2(
 					A2($author$project$Main$resetTypingState, origText, model),
 					A2(
 						$elm$core$Task$attempt,
-						function (_v6) {
+						function (_v9) {
 							return $author$project$Main$NoOp;
 						},
 						$elm$browser$Browser$Dom$blur($author$project$Main$restartBtnId)));
@@ -6304,7 +6337,7 @@ var $author$project$Main$view = function (model) {
 								_List_fromArray(
 									[
 										$elm$html$Html$text(
-										$elm$core$String$fromList(model.k))
+										$elm$core$String$fromList(model.g))
 									])),
 							A2(
 								$elm$core$List$cons,
@@ -6313,8 +6346,8 @@ var $author$project$Main$view = function (model) {
 									A2(
 										$elm$core$List$drop,
 										$elm$core$List$length(model.j),
-										model.p))))),
-						$elm$core$List$isEmpty(model.p) ? A2(
+										model.l))))),
+						$elm$core$List$isEmpty(model.l) ? A2(
 						$elm$html$Html$div,
 						_List_Nil,
 						_List_fromArray(
@@ -6328,10 +6361,10 @@ var $author$project$Main$view = function (model) {
 									$elm$core$String$left,
 									5,
 									$elm$core$String$fromFloat(
-										A2($author$project$Main$calculateSuccessRate, model.B, model.k))))
+										A2($author$project$Main$calculateSuccessRate, model.B, model.g))))
 							])) : $elm$html$Html$text(''),
 						function () {
-						var _v0 = model.n;
+						var _v0 = model.o;
 						if (_v0.$ === 1) {
 							return A2(
 								$elm$html$Html$div,
