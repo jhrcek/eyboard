@@ -70,8 +70,8 @@ view model =
                 [ A.style "font-size" "30px"
                 , A.style "font-family" "Courier new"
                 , A.style "font-weight" "500"
-                , A.style "line-height" "200%"
-                , A.style "white-space" "pre"
+                , A.style "line-height" "150%"
+                , A.style "white-space" "pre-wrap"
                 ]
                 (Html.span [ A.style "color" "#95c590" ] [ Html.text <| String.fromList <| visualizeEnter model.acceptedChars ]
                     :: mistypedCharsView model.mistypedChars
