@@ -71,8 +71,9 @@ view model =
                 , A.style "font-family" "Courier new"
                 , A.style "font-weight" "500"
                 , A.style "line-height" "200%"
+                , A.style "white-space" "pre"
                 ]
-                (Html.span [ A.style "color" "#95c590" ] [ Html.text (String.fromList model.acceptedChars) ]
+                (Html.span [ A.style "color" "#95c590" ] [ Html.text <| String.fromList <| visualizeEnter model.acceptedChars ]
                     :: mistypedCharsView model.mistypedChars
                     :: (remainingCharsView <| List.drop (List.length model.mistypedChars) model.remainingChars)
                 )
@@ -157,9 +158,22 @@ remainingCharsView chars =
                 [ A.style "color" "#3295db"
                 , A.style "text-decoration" "underline"
                 ]
-                [ Html.text (String.fromChar c) ]
-            , Html.span [] [ Html.text (String.fromList rest) ]
+                [ Html.text <| String.fromList <| visualizeEnter [ c ] ]
+            , Html.span [] [ Html.text <| String.fromList <| visualizeEnter rest ]
             ]
+
+
+visualizeEnter : List Char -> List Char
+visualizeEnter =
+    let
+        f chr list =
+            if chr == '\n' then
+                enterChar :: chr :: list
+
+            else
+                chr :: list
+    in
+    List.foldr f []
 
 
 mistypedCharsView : List Char -> Html Msg
@@ -169,13 +183,16 @@ mistypedCharsView chars =
             (String.fromList <|
                 List.map
                     (\c ->
-                        if c == ' ' then
-                            -- If user mistypes space, we need to show non-breaking space so it's visible
-                            '\u{00A0}'
-                            {- nbsp; -}
+                        case c of
+                            ' ' ->
+                                -- If user mistypes space, we need to show non-breaking space so it's visible
+                                '\u{00A0}'
 
-                        else
-                            c
+                            '\n' ->
+                                enterChar
+
+                            _ ->
+                                c
                     )
                     chars
             )
@@ -186,8 +203,32 @@ keyParser : RawKey -> Maybe Keyboard.Key
 keyParser =
     Keyboard.oneOf
         [ Keyboard.characterKeyOriginal
-        , Keyboard.editingKey
+        , otherKeys
         ]
+
+
+enterChar : Char
+enterChar =
+    '⏎'
+
+
+otherKeys : RawKey -> Maybe Keyboard.Key
+otherKeys rawKey =
+    case Keyboard.rawValue rawKey of
+        "Enter" ->
+            Just Keyboard.Enter
+
+        "Tab" ->
+            Just Keyboard.Tab
+
+        "Backspace" ->
+            Just Keyboard.Backspace
+
+        "Spacebar" ->
+            Just Keyboard.Spacebar
+
+        _ ->
+            Nothing
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -210,49 +251,36 @@ update msg model =
 
         KeyDown rawKey ->
             case keyParser rawKey of
-                Just Keyboard.Backspace ->
-                    ( case List.init model.mistypedChars of
-                        Nothing ->
-                            case List.unconsLast model.acceptedChars of
+                Just parsedKey ->
+                    case parsedKey of
+                        Keyboard.Backspace ->
+                            ( case List.init model.mistypedChars of
                                 Nothing ->
-                                    model
+                                    case List.unconsLast model.acceptedChars of
+                                        Nothing ->
+                                            model
 
-                                Just ( lastAccepted, initAccepted ) ->
-                                    { model
-                                        | acceptedChars = initAccepted
-                                        , remainingChars = lastAccepted :: model.remainingChars
-                                    }
+                                        Just ( lastAccepted, initAccepted ) ->
+                                            { model
+                                                | acceptedChars = initAccepted
+                                                , remainingChars = lastAccepted :: model.remainingChars
+                                            }
 
-                        Just mistypedInit ->
-                            { model | mistypedChars = mistypedInit }
-                    , Cmd.none
-                    )
+                                Just mistypedInit ->
+                                    { model | mistypedChars = mistypedInit }
+                            , Cmd.none
+                            )
 
-                Just (Keyboard.Character c) ->
-                    case model.remainingChars of
-                        b :: rest ->
-                            if List.isEmpty model.mistypedChars && c == String.fromChar b then
-                                ( { model
-                                    | acceptedChars = model.acceptedChars ++ String.toList c
-                                    , remainingChars = rest
-                                  }
-                                  -- We only measure time after successfully typed character
-                                , Task.perform GotTimeWhenCharWasTyped Time.now
-                                )
+                        Keyboard.Character c ->
+                            acceptCharacter model c
 
-                            else
-                                ( { model
-                                    | mistypedChars = model.mistypedChars ++ String.toList c
-                                    , mistakePositions = Set.insert (List.length model.acceptedChars) model.mistakePositions
-                                  }
-                                , Cmd.none
-                                )
+                        Keyboard.Enter ->
+                            acceptCharacter model "\n"
 
-                        [] ->
+                        _ ->
                             ( model, Cmd.none )
 
                 _ ->
-                    -- TODO do we need to handle other chars?
                     ( model, Cmd.none )
 
         InputTextEdit ->
@@ -292,6 +320,31 @@ update msg model =
             ( model, Cmd.none )
 
 
+acceptCharacter : Model -> String -> ( Model, Cmd Msg )
+acceptCharacter model c =
+    case model.remainingChars of
+        b :: rest ->
+            if List.isEmpty model.mistypedChars && c == String.fromChar b then
+                ( { model
+                    | acceptedChars = model.acceptedChars ++ String.toList c
+                    , remainingChars = rest
+                  }
+                  -- We only measure time after successfully typed character
+                , Task.perform GotTimeWhenCharWasTyped Time.now
+                )
+
+            else
+                ( { model
+                    | mistypedChars = model.mistypedChars ++ String.toList c
+                    , mistakePositions = Set.insert (List.length model.acceptedChars) model.mistakePositions
+                  }
+                , Cmd.none
+                )
+
+        [] ->
+            ( model, Cmd.none )
+
+
 resetTypingState : String -> Model -> Model
 resetTypingState textToType model =
     { model
@@ -325,5 +378,5 @@ subscriptions model =
 
 -- TODO save stats and progress in local storage
 -- TODO move the already written text up
--- TODO deal with input text containing Enter?
 -- TODO deal with empty input
+-- TODO make the set of accepted keys tighter - not all ASCII keys should be accepted
